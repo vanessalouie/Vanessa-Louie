@@ -49,9 +49,9 @@ louiev@hawaii.edu · Honolulu, HI
 ---
 
 ## HONORS AND AWARDS
-**D.E.C.A. Career Development**, *Award/Recognition* — City, State — Month Year  
-- Bullet explaining project/achievement and your role  
-- Bullet about technical/creative details, tools used, or measurable outcomes   
+**D.E.C.A. Career Development**, * 2nd Place in Human Resource Management* — Honolulu, Hawaii —  2023  
+- Placed second in the state in a business administraction exam.
+- Placed second in the state in human resource management roleplay scenario, where we were given a situation and a problem to solve under 15 minutes.  
 
 ---
 
