@@ -6,3 +6,6 @@ My primary focus lies at the intersection of human resources and technology. I a
 Building on this focus, I maintain a 3.97 GPA and have earned Dean's List honors for three consecutive years. During my previous internship at The Queen's Health System, I centralized Standard Operating Procedures (SOPs) into a single platform with integrated version history and modification tracking. I also hold a Google AI Essentials certification.
 
 Looking ahead, my immediate goals are to start a personal HR analytics project and earn my SHRM-CP certification. In the long run, I aspire to achieve the SHRM-SCP designation and pursue advanced MIS certifications to drive data-informed workforce strategy.
+
+Drafted  with help from Gemini; reviewed and edited by me.
+
