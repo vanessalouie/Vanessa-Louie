@@ -1,0 +1,1 @@
+What I am able to do, with each subfolder being a capability with a spec.md written befor the build.
