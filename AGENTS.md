@@ -1,12 +1,25 @@
 # AI conventions
 
 ## About this repository
-My public portfolio for finance related models,  owned by Vanessa Louie.
+My public portfolio for finance related models,owned by Vanessa Louie.
 Canonical file: AGENTS.md. CLAUDE.md points here.
+
+## Scenario
+Scenario 34: erp-software
+A U.S. ERP-software firm has invoiced a Dutch retailer, in euros (EUR).
+
+Receivable: EUR 2,900,000, received in 91 days (3 months)
+Spot: EURUSD, market quote
+Forward (indicative): EURUSD 1.1653, maturity 91 days
+USD interest rate: [n.nn%]
+EUR interest rate: [n.nn%]
+Options (no multiplier):
+Put on EUR, strike at spot: premium USD 0.0147 per EUR
+Call on EUR, strike at spot: premium USD 0.0199 per EUR
 
 ## About me
 - Work background in HR operations: leave of absence cases, I-9 review, position tracking, payroll validation, SharePoint and Excel tools.
--Reply in English only.
+-Reply in American English only.
 
 ## Where things are
 - capabilities/<capability>/  a capability, with its spec
