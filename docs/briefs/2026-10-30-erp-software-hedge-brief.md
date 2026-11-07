@@ -12,8 +12,8 @@ llm_used: "Claude"
 
 # ERP Software EUR Receivable: FX Hedging Executive Brief
 
-**Created by:** [Vanessa Louie]  
-**Updated by:** [Vanessa Louie]  
+**Created by:** Vanessa Louie  
+**Updated by:** Vanessa Louie 
 **Date Created:** 2026-10-30  
 **Date Updated:** 2026-10-30  
 **Version:** 0.2  
@@ -57,7 +57,7 @@ I will build one workbook that prices all three hedges side by side across settl
 
 **Limitations:** Spot and both interest rates come from the market close on the day I begin Stage 2, with date and source recorded. The quoted call on EUR stays out, because it protects a payable, not a receivable. I could also be wrong if spot sits above 1.18, which would move the put's break-even.
 
-**Next Steps:** I will write the model plan (Stage 2), build and audit the Excel workbook with AI help (Stage 3), replace the placeholders with live market data and a live or CIP-implied forward, commenting on the gap (Stage 4), and write the final recommendation in a decision memo (Stage 5). A process is coming, not a gut call.
+**Next Steps:** I will write the model plan (Stage 2), build and audit the workbook with AI help (Stage 3), replace the placeholders with live market data and a live or CIP-implied forward, commenting on the gap (Stage 4), and verify the model before the decision memo (Stage 5): a separate LLM run, plus my own hand recomputation of the $3,379,370 forward, the money-market hedge, and the $42,630 put cost, and a check of my interest-implied forward against a published bank quote. If any figure differs by more than 0.5%, I will find the cause before writing my recommendation.
 
 ---
 
