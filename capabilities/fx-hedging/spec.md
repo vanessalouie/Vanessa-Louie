@@ -13,9 +13,9 @@
 | **Created by** | Vanessa Louie |
 | **Updated by** | Vanessa Louie |
 | **Date Created** | 2026-11-06 |
-| **Date Updated** | 2026-11-06 |
-| **Version** | 0.3 |
-| **LLM Used** (optional) | Claude: helped fit my draft to the course template and recomputed the check figures; I reviewed every figure and wrote the model review (§6.1–6.2) |
+| **Date Updated** | 2026-11-13 |
+| **Version** | 0.4 |
+| **LLM Used** (optional) | Claude: helped fit my draft to the course template and recomputed the check figures; I reviewed every figure and wrote the model review (§6.1–6.2). v0.4: Claude drafted the edits from my build-contract decisions |
 | **Role** | Treasury Analyst |
 | **Audience** | CFO |
 | **Companion Workbook** | `capabilities/fx-hedging/model.xlsx` (Scenario 34, `erp-software`; built in Stage 3) |
@@ -24,29 +24,31 @@
 
 ## 1. Problem Statement
 
-A U.S. ERP-software firm (functional currency USD) has invoiced a Dutch retailer EUR 2,900,000, settling in 91 days. Rates are quoted in USD per EUR, so a euro depreciation over the horizon would reduce realized USD proceeds, and the dollar amount is unknown until settlement. The objective is to protect USD proceeds at an acceptable cost, while showing how much upside each strategy gives up. This specification documents the framework used to compare four strategies — **no hedge**, **forward hedge**, **money-market hedge**, and **option (put) hedge** — and to produce the sensitivity evidence behind the Stage 5 decision memo to the CFO of the corporate treasury function. The EUR call quote is carried in the inputs but unused, because a call hedges a payable, not this receivable.
+A U.S. ERP-software firm (functional currency USD) has invoiced a Dutch retailer EUR 2,900,000, settling in 91 days. Rates are quoted in USD per EUR, so a euro depreciation over the horizon would reduce realized USD proceeds, and the dollar amount is unknown until settlement. The objective is to protect USD proceeds at an acceptable cost, while showing how much upside each strategy gives up. This specification documents the framework used to compare four strategies — **no hedge**, **forward hedge**, **money-market hedge**, and **option (put) hedge** — and to produce the sensitivity evidence behind the Stage 5 decision memo to the CFO of the corporate treasury function. The EUR call is also calculated, for comparison only: a call does not hedge a EUR receivable, so it is excluded from the strategy ranking.
 
 ---
 
 ## 2. Inputs (Known Variables)
 
-All inputs are workbook **named ranges**; dates, sources, and access timestamps are recorded in the Notes tab. Every market value below is **indicative, replaced with live data at Stage 4**, except `FC_AMT`, `T_DAYS`, and the option premiums, which are fixed by the scenario.
+All inputs are workbook **named ranges** on the Inputs tab. The ten marked **Contract** are the build contract's required named ranges; `BASIS`, `STEP_FRAC`, `FWD_SOURCE`, and the §2.2 values are extra named ranges, which the contract allows. Sources, dates, and access timestamps are stored **once**, in the Cover tab's provenance block (§5); every other tab references that block instead of repeating it. Every market value below is **indicative, replaced with live data at Stage 4**, except `FC_AMT`, `T_DAYS`, and the option premiums, which are fixed by the scenario.
 
 ### 2.1 Core Inputs
 
-| Standardized Name | Description | Unit | Placeholder | Stage 4 source |
-|-------------------|-------------|------|--------:|----------------|
-| `FC_AMT` | EUR receivable | EUR | 2,900,000 | Fixed by scenario |
-| `S0_in` | Spot at inception | USD per EUR | 1.1157 | 6 Nov 2026 intraday, PrimeXBT; replace with the refresh-day close (e.g., Yahoo Finance EURUSD=X), with timestamp |
-| `F0_in` | 91-day forward | USD per EUR | 1.1653 | Scenario's indicative quote (stale); replace with a live bank/market forward or `F_IMPLIED`, with a comment on the gap |
-| `R_USD` | USD rate to settlement | Annual %, ACT/360 | 4.0669% | 3-month CME Term SOFR, 5 Nov 2026, global-rates.com; same series at Stage 4 |
-| `R_FC` | EUR rate to settlement | Annual %, ACT/360 | 2.812% | 3-month Euribor, 5 Nov 2026, global-rates.com; same series at Stage 4 |
-| `T_DAYS` | Days to settlement | Days | 91 | Fixed by scenario |
-| `BASIS` | Day-count denominator | Days | 360 | Both legs ACT/360, so a single value is exact |
-| `K_PUT` | Put strike | USD per EUR | 1.1157 (= `S0_in`) | Reset to the Stage 4 spot |
-| `K_CALL` | Call strike (unused) | USD per EUR | 1.1157 (= `S0_in`) | Reset to the Stage 4 spot |
-| `PREM_PUT` | Put premium per 1 EUR | USD | 0.0147 | Fixed by scenario (retail option quotes are unreliable) |
-| `PREM_CALL` | Call premium per 1 EUR (unused) | USD | 0.0199 | Fixed by scenario |
+| Standardized Name | Contract | Cell | Fill | Description | Unit | Placeholder | Stage 4 source |
+|-------------------|:--:|------|------|-------------|------|--------:|----------------|
+| `FC_AMT` | ✓ | `Inputs!C4` | Yellow | EUR receivable | EUR | 2,900,000 | Fixed by scenario |
+| `S0_in` | ✓ | `Inputs!C5` | Yellow | Spot at inception | USD per EUR | 1.1157 | 6 Nov 2026 intraday, PrimeXBT; replace with the refresh-day close (e.g., Yahoo Finance EURUSD=X), with timestamp |
+| `F0_in` | ✓ | `Inputs!C6` | Yellow | 91-day forward | USD per EUR | 1.1653 | Scenario's indicative quote (stale); replace with a live bank/market forward or `F_IMPLIED`, with a comment on the gap |
+| `R_USD` | ✓ | `Inputs!C7` | Yellow | USD rate to settlement | Annual %, ACT/360 | 4.0669% | 3-month CME Term SOFR, 5 Nov 2026, global-rates.com; same series at Stage 4 |
+| `R_FC` | ✓ | `Inputs!C8` | Yellow | EUR rate to settlement | Annual %, ACT/360 | 2.812% | 3-month Euribor, 5 Nov 2026, global-rates.com; same series at Stage 4 |
+| `T_DAYS` | ✓ | `Inputs!C9` | Yellow | Days to settlement | Days | 91 | Fixed by scenario |
+| `BASIS` | | `Inputs!C10` | Blue | Day-count denominator (assumption) | Days | 360 | Both legs ACT/360, so a single value is exact |
+| `K_PUT` | ✓ | `Inputs!C11` | Green | Put strike: the formula `=S0_in` (at the money), not a typed value | USD per EUR | 1.1157 | Follows `S0_in` automatically |
+| `K_CALL` | ✓ | `Inputs!C12` | Green | Call strike: the formula `=S0_in` (at the money), not a typed value | USD per EUR | 1.1157 | Follows `S0_in` automatically |
+| `PREM_PUT` | ✓ | `Inputs!C13` | Yellow | Put premium per 1 EUR | USD | 0.0147 | Fixed by scenario (retail option quotes are unreliable) |
+| `PREM_CALL` | ✓ | `Inputs!C14` | Yellow | Call premium per 1 EUR (comparison only) | USD | 0.0199 | Fixed by scenario |
+| `STEP_FRAC` | | `Inputs!C15` | Blue | Sensitivity grid step (assumption) | % | 1% | Fixed by design |
+| `FWD_SOURCE` | | `Inputs!C16` | Blue | Forward-source toggle (assumption): data-validation dropdown "Quoted" / "Implied" | Text | "Quoted" (default) | Fixed by design; see §6.2 item 1 |
 
 ### 2.2 Derived / Intermediate Values
 
@@ -54,8 +56,9 @@ All inputs are workbook **named ranges**; dates, sources, and access timestamps 
 |------|-------------|--------|
 | `DF_USD` / `DF_FC` | Growth factors to settlement | `1 + R_USD × T_DAYS / BASIS` / `1 + R_FC × T_DAYS / BASIS` |
 | `FV_PREM_PUT` | Put premium carried to settlement (negative = cost) | `−PREM_PUT × FC_AMT × DF_USD` |
+| `FV_PREM_CALL` | Call premium carried to settlement (negative = cost) | `−PREM_CALL × FC_AMT × DF_USD` |
 | `F_IMPLIED` | CIP-implied forward | `S0_in × DF_USD / DF_FC` |
-| `STEP_FRAC` | Grid step (blue assumption cell) | 1% |
+| `F_USED` | Forward used by the forward-hedge outputs | `IF(FWD_SOURCE = "Implied", F_IMPLIED, F0_in)` |
 | `S_T_grid` | Settlement spot grid | `S0_in × (1 + i × STEP_FRAC)`, i = −5 … +5 |
 | `USD_NO_HEDGE` | USD proceeds under no hedge | `S_T × FC_AMT` |
 
@@ -83,10 +86,11 @@ Named-range pseudocode for the **receivable**; each numbered sub-step lives in i
 1. `DF_USD` = `1 + R_USD × T_DAYS / BASIS` *(growth factor, not a fractional discount factor)*
 2. `DF_FC` = `1 + R_FC × T_DAYS / BASIS`
 3. `FV_PREM_PUT` = `−PREM_PUT × FC_AMT × DF_USD`
+4. `FV_PREM_CALL` = `−PREM_CALL × FC_AMT × DF_USD`
 
 ### Step 2 — Forward hedge (certainty benchmark)
 
-- `USD_FWD` = `FC_AMT × F0_in`, locked in at t₀ and constant across the grid.
+- `USD_FWD` = `FC_AMT × F_USED`, locked in at t₀ and constant across the grid. With `FWD_SOURCE` = "Quoted" (the default), `F_USED` = `F0_in`.
 
 ### Step 3 — Money-market hedge (three steps, then the parity check)
 
@@ -94,7 +98,7 @@ Named-range pseudocode for the **receivable**; each numbered sub-step lives in i
 2. Convert at spot: `(FC_AMT / DF_FC) × S0_in`.
 3. Invest the USD to maturity: `USD_MM` = `(FC_AMT / DF_FC) × S0_in × DF_USD`.
 
-Then `F_IMPLIED` = `S0_in × DF_USD / DF_FC` and `PARITY_GAP` = `USD_FWD − USD_MM` (USD and % of `USD_MM`).
+Then `F_IMPLIED` = `S0_in × DF_USD / DF_FC` and `PARITY_GAP` = `FC_AMT × F0_in − USD_MM` (USD and % of `USD_MM`). The parity check always uses the quoted `F0_in`, never `F_USED`, so the forward-source toggle cannot hide the gap.
 
 > **Parity check:** `USD_MM ≈ USD_FWD` within 0.05% once Stage 4 inputs are live. With the placeholder forward, a gap of about 4.1% ($133,649) is expected and must be flagged, not fixed.
 
@@ -102,7 +106,7 @@ Then `F_IMPLIED` = `S0_in × DF_USD / DF_FC` and `PARITY_GAP` = `USD_FWD − USD
 
 - Pay `PREM_PUT × FC_AMT` USD today for a EUR put with strike `K_PUT`.
 - `USD_PUT(S_T)` = `MAX(S_T, K_PUT) × FC_AMT + FV_PREM_PUT`
-- `BREAKEVEN_PUT_FWD` = `F0_in − FV_PREM_PUT / FC_AMT` *(settlement spot at which the put matches the forward)*
+- `BREAKEVEN_PUT_FWD` = `F_USED − FV_PREM_PUT / FC_AMT` *(settlement spot at which the put matches the forward)*
 
 ### Step 5 — Sensitivity table (rows of the grid)
 
@@ -113,17 +117,24 @@ Then `F_IMPLIED` = `S0_in × DF_USD / DF_FC` and `PARITY_GAP` = `USD_FWD − USD
 | Money market | `USD_MM` | constant across rows |
 | Option (put) | `USD_PUT(S_T)` | `MAX(S_T, K_PUT) × FC_AMT + FV_PREM_PUT` |
 | Hedge profit | `HEDGE_PROFIT_k(S_T)` | `USD_k − USD_NO_HEDGE`, one sub-column per active hedge |
-| Overall winner | label | `ARGMAX(USD_NO_HEDGE, USD_FWD, USD_MM, USD_PUT)` |
-| Best active hedge | label | `ARGMAX(USD_FWD, USD_MM, USD_PUT)` |
+| Overall winner | label | `ARGMAX(USD_NO_HEDGE, USD_FWD, USD_MM, USD_PUT)`; the call is excluded |
+| Best active hedge | label | `ARGMAX(USD_FWD, USD_MM, USD_PUT)`; the call is excluded |
 
 ### Step 6 — Summary metrics
 
 - `USD_FLOOR_PUT` = `MIN(USD_PUT)` across `S_T_grid`
 - `USD_BASE_k` = `USD_k` at `S_T = S0_in` for each strategy (feeds §5.1)
 
-### Step 7 — Payable variant
+### Step 7 — Call option (comparison only)
 
-Not built: this scenario is a receivable. `K_CALL` and `PREM_CALL` are carried for completeness only.
+On the Option tab, below the put, under the label **"Comparison only: a call does not hedge a EUR receivable."**
+
+- Premium paid today: `PREM_CALL × FC_AMT` USD
+- `FV_PREM_CALL` = `−PREM_CALL × FC_AMT × DF_USD`
+- Net call payoff for each settlement spot (its own column): `CALL_NET(S_T)` = `MAX(S_T − K_CALL, 0) × FC_AMT + FV_PREM_CALL`
+- Call proceeds, consistent with the other strategies: `USD_CALL(S_T)` = `S_T × FC_AMT + CALL_NET(S_T)`
+
+The call is excluded from the overall-winner and best-active-hedge labels (Step 5). A payable variant is not built.
 
 ---
 
@@ -133,20 +144,30 @@ Not built: this scenario is a receivable. `K_CALL` and `PREM_CALL` are carried f
 
 | Tab | Purpose |
 |-----|---------|
-| Cover | Title, scenario, author, version, date, and one-line purpose |
-| Legend/Key | Color legend: yellow inputs, blue assumptions, black formulas, gray outputs, green cross-tab links |
-| Inputs | All §2.1 named ranges, with units, source, and access timestamp beside each |
+| Cover | Title, scenario, author, version, date, one-line purpose, and the data-provenance block (below) |
+| Legend/Key | Color legend (cell fill): yellow inputs, blue assumptions (`BASIS`, `STEP_FRAC`, `FWD_SOURCE`), gray final outputs (strategy summary block, Sensitivity result columns and winner labels, Checks Result column), green every other formula |
+| Inputs | All §2.1 named ranges at their stated cells, with units; sources are referenced from the Cover provenance block, not repeated |
 | Forward | Forward hedge calculation (§4 Step 2) |
 | MoneyMarket | Three-step money-market hedge, `F_IMPLIED`, and the parity check (§4 Step 3) |
-| Option | Put payoff for each settlement spot and the break-even (§4 Step 4) |
+| Option | Put payoff for each settlement spot and the break-even (§4 Step 4); call, comparison only (§4 Step 7) |
 | Sensitivity | Grid, proceeds per strategy, hedge-profit columns, winner labels, and the chart (§4 Steps 5–6, §7) |
-| Notes & Assumptions | Sources with dates, assumptions, and the check results (§6.3) |
+| Checks | One row per validation check and per §5.1 figure (§5.2) |
+| Notes & Assumptions | Assumptions and limitations; sources are referenced from the Cover provenance block |
+
+**Cover data-provenance block** (the only place sources are stored), marked **"Indicative placeholder, replaced at Stage 4."**
+
+| Input | Source | Date |
+|-------|--------|------|
+| `S0_in` | PrimeXBT, intraday | 6 Nov 2026 |
+| `F0_in` | Scenario's indicative quote (stale) | Scenario |
+| `R_USD` | 3-month CME Term SOFR, global-rates.com | 5 Nov 2026 |
+| `R_FC` | 3-month Euribor, global-rates.com | 5 Nov 2026 |
 
 | Output | Description | Format | Purpose |
 |--------|-------------|--------|---------|
 | Strategy summary | `USD_FWD`, `USD_MM`, `F_IMPLIED`, `PARITY_GAP`, `USD_BASE_k`, `USD_FLOOR_PUT`, `BREAKEVEN_PUT_FWD` | Table above the grid | Executive at-a-glance |
 | Sensitivity table + hedge profit | USD proceeds and `USD_k − USD_NO_HEDGE` per strategy across `S_T_grid` | Sensitivity tab | Core evidence; isolates hedge value-add |
-| Winner / best-hedge labels | `ARGMAX` labels per row | Two label columns | Quick-read decision cue |
+| Winner / best-hedge labels | `ARGMAX` labels per row, call excluded | Two label columns | Quick-read decision cue |
 | Sensitivity chart | USD proceeds vs. `S_T`, four strategies | Embedded line chart | Visual comparison |
 | Executive summary | Recommendation narrative | Stage 5 decision memo | Downstream deliverable |
 
@@ -161,7 +182,24 @@ At `S_T = S0_in = 1.1157`, placeholder inputs — the regression checkpoint for 
 | Money market | $3,245,721 | n/a | +$10,191 |
 | Option (put) | $3,192,462 | n/a | −$43,068 |
 
-Check figures: `DF_USD` 1.010280 · `DF_FC` 1.007108 · EUR borrowed 2,879,532 · USD at spot $3,212,694 · `F_IMPLIED` 1.1192 · `PARITY_GAP` $133,649 · premium paid $42,630 · `FV_PREM_PUT` −$43,068 · `USD_FLOOR_PUT` $3,192,462 · `BREAKEVEN_PUT_FWD` 1.1802.
+Check figures: `DF_USD` 1.010280 · `DF_FC` 1.007108 · EUR borrowed 2,879,532 · USD at spot $3,212,694 · `F_IMPLIED` 1.1192 · `PARITY_GAP` $133,649 · premium paid $42,630 · `FV_PREM_PUT` −$43,068 · `USD_FLOOR_PUT` $3,192,462 · `BREAKEVEN_PUT_FWD` 1.1802 · call premium paid $57,710 · `FV_PREM_CALL` −$58,303 · `USD_CALL` at `S_T = S0_in` $3,177,227 (comparison only). All forward-based figures assume `FWD_SOURCE` = "Quoted".
+
+These base-case values and check figures are what the build contract calls the "§7 check figures." The Checks tab (§5.2) tests each one.
+
+### 5.2 Checks Tab
+
+One row per §6.3 check (parity, kink, constancy, grid) and one row per §5.1 base-case value and check figure. Columns:
+
+| Column | Content |
+|--------|---------|
+| Check | Name of the check or figure |
+| Expected | The §5.1 figure, or the rule's target (0 for a gap, 11 for the row count). Filled yellow and labeled **"Reference inputs, typed by design."** These are the only typed numbers outside the Inputs tab |
+| Calculated | A formula pointing at the workbook cell being checked |
+| Difference | `Calculated − Expected` |
+| Tolerance | Parity 0.05% of `USD_MM`; USD and EUR amounts ±1; growth factors ±0.000001; exchange rates ±0.0001; row count and constancy 0 |
+| Result | `=IF(ABS(Difference) <= Tolerance, "PASS", "FAIL")` |
+
+Failing checks stay visible as FAIL; no check is ever hard-coded or overridden to pass. The parity check is expected to show FAIL at placeholder inputs (§3).
 
 ---
 
@@ -197,9 +235,10 @@ Check figures: `DF_USD` 1.010280 · `DF_FC` 1.007108 · EUR borrowed 2,879,532 �
 - [ ] **Constancy check:** forward and money-market proceeds do not change across the grid
 - [ ] **Grid check:** the core grid is symmetric around `S0_in`, driven by `STEP_FRAC`, with exactly 11 rows
 - [ ] **No error cells**, and every output is a formula — no typed-in numbers
-- [ ] §5.1 base-case and check figures reproduce within rounding
-- [ ] Notes tab records spot / forward / rate sources with access dates
-- [ ] Cell colors match the legend: <span style="background:#FFFF00;">yellow</span> inputs, <span style="color:#0000FF;">blue</span> assumptions, black formulas, gray outputs, <span style="color:#024731;">green</span> cross-tab links
+- [ ] §5.1 base-case and check figures reproduce within rounding, shown row by row on the Checks tab (§5.2)
+- [ ] Checks tab: every row has a PASS/FAIL formula; failing checks show FAIL and are never forced to pass
+- [ ] Cover provenance block records spot / forward / rate sources with access dates; no other tab stores a source
+- [ ] Cell fill colors match the legend: <span style="background:#FFFF00;">yellow</span> inputs, <span style="background:#9BC2E6;">blue</span> assumptions, <span style="background:#D9D9D9;">gray</span> final outputs (strategy summary block, Sensitivity result columns and winner labels, Checks Result column), <span style="background:#C6EFCE;">green</span> every other formula
 
 ---
 
@@ -235,3 +274,4 @@ Check figures: `DF_USD` 1.010280 · `DF_FC` 1.007108 · EUR borrowed 2,879,532 �
 | 0.1 | 2026-11-06 | Vanessa Louie | Initial draft |
 | 0.2 | 2026-11-06 | Vanessa Louie | Moved into the course spec template; adopted the negative-premium sign convention |
 | 0.3 | 2026-11-06 | Vanessa Louie | Added the model review (§6.1–6.2) and corrected three points in it; added tab purposes to §5 and the validation rules to §6.3; removed the template's guidance sections |
+| 0.4 | 2026-11-13 | Vanessa Louie | Aligned with the build contract: ten contract named ranges with exact Inputs cells; strikes as `=S0_in` formulas; fill-color legend (yellow inputs, blue assumptions, gray final outputs, green every other formula); call calculated for comparison only, with `CALL_NET` payoff and `USD_CALL` proceeds; `STEP_FRAC` (C15) and `FWD_SOURCE` toggle (C16) as named inputs, with `F_USED` feeding `USD_FWD` and `BREAKEVEN_PUT_FWD` while the parity check stays on `F0_in`; provenance moved to a single Cover block; added the Checks tab (§5.2) with yellow reference Expected values |
