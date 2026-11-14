@@ -23,3 +23,21 @@ To be appended after each use of AI
 - **Produced:** Gap list (named-range count and cells, legend conflict, call excluded, provenance in three places, Checks tab undefined, "§7" vs §5.1 numbering); spec v0.4 with the ten contract named ranges at `Inputs!C4`–`C14`, `STEP_FRAC` (C15) and `FWD_SOURCE` (C16), strikes as `=S0_in`, a fill-color legend, the call for comparison only (`CALL_NET`, `USD_CALL`), `F_USED` with parity kept on `F0_in`, a single Cover provenance block, and a Checks tab (§5.2).
 - **What was wrong:** My first decisions message still had two template placeholders (the ten names, the strike choice); Claude asked instead of guessing. The first v0.4 draft defined the call as payoff only, not proceeds; left gray vs. green undefined; gave the forward toggle and `STEP_FRAC` no name or cell; and had typed Expected values that conflicted with "formulas only." Cell addresses and Checks tolerances were Claude's proposals. My item to remove the +6%/+7% rows was reversed in my next message.
 - **How it was caught:** Claude flagged each problem under the draft diff; I decided each fix. Claude recomputed the new call figures in Python ($57,710 premium, −$58,303 `FV_PREM_CALL`, $3,177,227 `USD_CALL` at spot); still drafts until I verify them.
+
+## 2026-11-13 (third request)
+- **Asked:** Build the workbook specified in spec v0.4 as `capabilities/fx-hedging/model.xlsx`, ask about ambiguities first, do not commit.
+- **Produced:** `model.xlsx` (9 tabs, 39 named ranges, two charts, 27-row Checks tab), built through Excel by a script kept outside the repo. Before building, Claude asked two questions; I chose named tolerance inputs and a separate second chart for the +6%/+7% rows.
+- **What was wrong:** The first build runs failed: PowerShell passed array numbers to Excel in a form it could not take, and the script's "§" characters were misread until the file was re-saved with the right encoding. Claude added `TOL_EXACT` (a fifth tolerance) and helper named ranges not listed in the spec; the "/" in "Legend/Key" is not allowed in Excel tab names, so the tab is "Legend-Key."
+- **How it was caught:** The build script stopped on the bad cell and reported it; Claude read back every Checks row (26 PASS, parity FAIL as expected), scanned all tabs for error cells (none), and switched `FWD_SOURCE` to "Implied" to confirm the parity check still fails. I still need to audit the workbook.
+
+## 2026-11-13 (fourth request)
+- **Asked:** Update `spec.md` to match the built workbook (Legend-Key tab name, five `TOL_*` ranges, five helper ranges, actual check rows, fixed chart x-axis minimum, green MoneyMarket parity cell) and copy `build-model.ps1` into `capabilities/fx-hedging/`.
+- **Produced:** Spec edits in §2, §2.1, §2.2, §5, §5.2, §6.2 (new item 6), §6.3, and §7; `capabilities/fx-hedging/build-model.ps1`.
+- **What was wrong:** The spec still lags the build in three places I did not list (the second chart, the extra "Put intrinsic payoff" column, the formula-built grid index), and the version and change log were not updated.
+- **How it was caught:** Claude compared the build against the spec after the edits and flagged them.
+
+## 2026-11-13 (fifth request)
+- **Asked:** Fix those four gaps (separate extension chart with the break-even marked, the intrinsic column, the formula-built `i`, v0.5 with a change-log row), then commit spec, README, workbook + script, and prompt log separately, pushing after each.
+- **Produced:** Spec v0.5; `build-model.ps1` updated so the second chart is smaller, titled "Extended grid: put break-even vs forward," and marks the break-even at (`BREAKEVEN_PUT_FWD`, `USD_FWD`); `model.xlsx` rebuilt from it; four commits.
+- **What was wrong:** The workbook built earlier did not match the new chart wording in v0.5, so it had to be rebuilt. The first rebuild failed because I had `model.xlsx` open in Excel; Claude stopped and asked instead of closing my window.
+- **How it was caught:** Excel refused to overwrite the open file; Claude found the lock file and my open Excel window. After the rebuild Claude re-read the checks (0 error cells, only parity FAIL) and both charts (titles, sizes, marker at x = 1.1802).
