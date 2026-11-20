@@ -13,9 +13,9 @@
 | **Created by** | Vanessa Louie |
 | **Updated by** | Vanessa Louie |
 | **Date Created** | 2026-11-06 |
-| **Date Updated** | 2026-11-13 |
-| **Version** | 0.5 |
-| **LLM Used** (optional) | Claude: helped fit my draft to the course template and recomputed the check figures; I reviewed every figure and wrote the model review (§6.1–6.2). v0.4: Claude drafted the edits from my build-contract decisions. v0.5: Claude built the workbook and documented the build decisions I approved |
+| **Date Updated** | 2026-11-20 |
+| **Version** | 0.6 |
+| **LLM Used** (optional) | Claude: helped fit my draft to the course template and recomputed the check figures; I reviewed every figure and wrote the model review (§6.1–6.2). v0.4: Claude drafted the edits from my build-contract decisions. v0.5: Claude built the workbook and documented the build decisions I approved. v0.6: Claude drafted the toggle-removal edits I specified and rebuilt the workbook |
 | **Role** | Treasury Analyst |
 | **Audience** | CFO |
 | **Companion Workbook** | `capabilities/fx-hedging/model.xlsx` (Scenario 34, `erp-software`; built in Stage 3) |
@@ -30,7 +30,7 @@ A U.S. ERP-software firm (functional currency USD) has invoiced a Dutch retailer
 
 ## 2. Inputs (Known Variables)
 
-All inputs are workbook **named ranges** on the Inputs tab. The ten marked **Contract** are the build contract's required named ranges; `BASIS`, `STEP_FRAC`, `FWD_SOURCE`, the five `TOL_*` tolerances, and the §2.2 values are extra named ranges, which the contract allows. Sources, dates, and access timestamps are stored **once**, in the Cover tab's provenance block (§5); every other tab references that block instead of repeating it. Every market value below is **indicative, replaced with live data at Stage 4**, except `FC_AMT`, `T_DAYS`, and the option premiums, which are fixed by the scenario.
+All inputs are workbook **named ranges** on the Inputs tab. The ten marked **Contract** are the build contract's required named ranges; `BASIS`, `STEP_FRAC`, the five `TOL_*` tolerances, and the §2.2 values are extra named ranges, which the contract allows. Sources, dates, and access timestamps are stored **once**, in the Cover tab's provenance block (§5); every other tab references that block instead of repeating it. Every market value below is **indicative, replaced with live data at Stage 4**, except `FC_AMT`, `T_DAYS`, and the option premiums, which are fixed by the scenario.
 
 ### 2.1 Core Inputs
 
@@ -38,7 +38,7 @@ All inputs are workbook **named ranges** on the Inputs tab. The ten marked **Con
 |-------------------|:--:|------|------|-------------|------|--------:|----------------|
 | `FC_AMT` | ✓ | `Inputs!C4` | Yellow | EUR receivable | EUR | 2,900,000 | Fixed by scenario |
 | `S0_in` | ✓ | `Inputs!C5` | Yellow | Spot at inception | USD per EUR | 1.1157 | 6 Nov 2026 intraday, PrimeXBT; replace with the refresh-day close (e.g., Yahoo Finance EURUSD=X), with timestamp |
-| `F0_in` | ✓ | `Inputs!C6` | Yellow | 91-day forward | USD per EUR | 1.1653 | Scenario's indicative quote (stale); replace with a live bank/market forward or `F_IMPLIED`, with a comment on the gap |
+| `F0_in` | ✓ | `Inputs!C6` | Yellow | 91-day forward | USD per EUR | 1.1653 | The bank's quote, or a requote from the bank |
 | `R_USD` | ✓ | `Inputs!C7` | Yellow | USD rate to settlement | Annual %, ACT/360 | 4.0669% | 3-month CME Term SOFR, 5 Nov 2026, global-rates.com; same series at Stage 4 |
 | `R_FC` | ✓ | `Inputs!C8` | Yellow | EUR rate to settlement | Annual %, ACT/360 | 2.812% | 3-month Euribor, 5 Nov 2026, global-rates.com; same series at Stage 4 |
 | `T_DAYS` | ✓ | `Inputs!C9` | Yellow | Days to settlement | Days | 91 | Fixed by scenario |
@@ -48,7 +48,6 @@ All inputs are workbook **named ranges** on the Inputs tab. The ten marked **Con
 | `PREM_PUT` | ✓ | `Inputs!C13` | Yellow | Put premium per 1 EUR | USD | 0.0147 | Fixed by scenario (retail option quotes are unreliable) |
 | `PREM_CALL` | ✓ | `Inputs!C14` | Yellow | Call premium per 1 EUR (comparison only) | USD | 0.0199 | Fixed by scenario |
 | `STEP_FRAC` | | `Inputs!C15` | Blue | Sensitivity grid step (assumption) | % | 1% | Fixed by design |
-| `FWD_SOURCE` | | `Inputs!C16` | Blue | Forward-source toggle (assumption): data-validation dropdown "Quoted" / "Implied" | Text | "Quoted" (default) | Fixed by design; see §6.2 item 1 |
 | `TOL_USD` | | `Inputs!C17` | Blue | Checks tolerance for USD amounts; also used for EUR amounts (±1 unit) | USD / EUR | 1 | Fixed by design |
 | `TOL_FACTOR` | | `Inputs!C18` | Blue | Checks tolerance for growth factors | Factor | 0.000001 | Fixed by design |
 | `TOL_RATE` | | `Inputs!C19` | Blue | Checks tolerance for exchange rates | USD per EUR | 0.0001 | Fixed by design |
@@ -63,7 +62,6 @@ All inputs are workbook **named ranges** on the Inputs tab. The ten marked **Con
 | `FV_PREM_PUT` | Put premium carried to settlement (negative = cost) | `−PREM_PUT × FC_AMT × DF_USD` |
 | `FV_PREM_CALL` | Call premium carried to settlement (negative = cost) | `−PREM_CALL × FC_AMT × DF_USD` |
 | `F_IMPLIED` | CIP-implied forward | `S0_in × DF_USD / DF_FC` |
-| `F_USED` | Forward used by the forward-hedge outputs | `IF(FWD_SOURCE = "Implied", F_IMPLIED, F0_in)` |
 | `EUR_BORROWED` | Money-market Step 1: EUR borrowed today | `FC_AMT / DF_FC` |
 | `USD_AT_SPOT` | Money-market Step 2: borrowed EUR converted at spot | `EUR_BORROWED × S0_in` |
 | `PARITY_GAP_PCT` | Parity gap as a share of money-market proceeds | `PARITY_GAP / USD_MM` |
@@ -100,7 +98,7 @@ Named-range pseudocode for the **receivable**; each numbered sub-step lives in i
 
 ### Step 2 — Forward hedge (certainty benchmark)
 
-- `USD_FWD` = `FC_AMT × F_USED`, locked in at t₀ and constant across the grid. With `FWD_SOURCE` = "Quoted" (the default), `F_USED` = `F0_in`.
+- `USD_FWD` = `FC_AMT × F0_in`, locked in at t₀ and constant across the grid.
 
 ### Step 3 — Money-market hedge (three steps, then the parity check)
 
@@ -108,7 +106,7 @@ Named-range pseudocode for the **receivable**; each numbered sub-step lives in i
 2. Convert at spot: `(FC_AMT / DF_FC) × S0_in`.
 3. Invest the USD to maturity: `USD_MM` = `(FC_AMT / DF_FC) × S0_in × DF_USD`.
 
-Then `F_IMPLIED` = `S0_in × DF_USD / DF_FC` and `PARITY_GAP` = `FC_AMT × F0_in − USD_MM` (USD and % of `USD_MM`). The parity check always uses the quoted `F0_in`, never `F_USED`, so the forward-source toggle cannot hide the gap.
+Then `F_IMPLIED` = `S0_in × DF_USD / DF_FC` and `PARITY_GAP` = `FC_AMT × F0_in − USD_MM` (USD and % of `USD_MM`).
 
 > **Parity check:** `USD_MM ≈ USD_FWD` within 0.05% once Stage 4 inputs are live. With the placeholder forward, a gap of about 4.1% ($133,649) is expected and must be flagged, not fixed.
 
@@ -117,7 +115,7 @@ Then `F_IMPLIED` = `S0_in × DF_USD / DF_FC` and `PARITY_GAP` = `FC_AMT × F0_in
 - Pay `PREM_PUT × FC_AMT` USD today for a EUR put with strike `K_PUT`.
 - `USD_PUT(S_T)` = `MAX(S_T, K_PUT) × FC_AMT + FV_PREM_PUT`
 - Put intrinsic payoff (reference only, its own column): `MAX(K_PUT − S_T, 0) × FC_AMT`. It does not feed `USD_PUT` or any output.
-- `BREAKEVEN_PUT_FWD` = `F_USED − FV_PREM_PUT / FC_AMT` *(settlement spot at which the put matches the forward)*
+- `BREAKEVEN_PUT_FWD` = `F0_in − FV_PREM_PUT / FC_AMT` *(settlement spot at which the put matches the forward)*
 
 ### Step 5 — Sensitivity table (rows of the grid)
 
@@ -156,7 +154,7 @@ The call is excluded from the overall-winner and best-active-hedge labels (Step 
 | Tab | Purpose |
 |-----|---------|
 | Cover | Title, scenario, author, version, date, one-line purpose, and the data-provenance block (below) |
-| Legend-Key | Color legend (cell fill): yellow inputs, blue assumptions (`BASIS`, `STEP_FRAC`, `FWD_SOURCE`, `TOL_*`), gray final outputs (strategy summary block, Sensitivity result columns and winner labels, Checks Result column), green every other formula. Fulfils the contract's Legend/Key tab; Excel does not allow "/" in tab names |
+| Legend-Key | Color legend (cell fill): yellow inputs, blue assumptions (`BASIS`, `STEP_FRAC`, `TOL_*`), gray final outputs (strategy summary block, Sensitivity result columns and winner labels, Checks Result column), green every other formula. Fulfils the contract's Legend/Key tab; Excel does not allow "/" in tab names |
 | Inputs | All §2.1 named ranges at their stated cells, with units; sources are referenced from the Cover provenance block, not repeated |
 | Forward | Forward hedge calculation (§4 Step 2) |
 | MoneyMarket | Three-step money-market hedge, `F_IMPLIED`, and the parity check (§4 Step 3). Its parity PASS/FAIL cell is green (a working result); the Checks tab Result column is the gray output |
@@ -193,7 +191,7 @@ At `S_T = S0_in = 1.1157`, placeholder inputs — the regression checkpoint for 
 | Money market | $3,245,721 | n/a | +$10,191 |
 | Option (put) | $3,192,462 | n/a | −$43,068 |
 
-Check figures: `DF_USD` 1.010280 · `DF_FC` 1.007108 · EUR borrowed 2,879,532 · USD at spot $3,212,694 · `F_IMPLIED` 1.1192 · `PARITY_GAP` $133,649 · premium paid $42,630 · `FV_PREM_PUT` −$43,068 · `USD_FLOOR_PUT` $3,192,462 · `BREAKEVEN_PUT_FWD` 1.1802 · call premium paid $57,710 · `FV_PREM_CALL` −$58,303 · `USD_CALL` at `S_T = S0_in` $3,177,227 (comparison only). All forward-based figures assume `FWD_SOURCE` = "Quoted".
+Check figures: `DF_USD` 1.010280 · `DF_FC` 1.007108 · EUR borrowed 2,879,532 · USD at spot $3,212,694 · `F_IMPLIED` 1.1192 · `PARITY_GAP` $133,649 · premium paid $42,630 · `FV_PREM_PUT` −$43,068 · `USD_FLOOR_PUT` $3,192,462 · `BREAKEVEN_PUT_FWD` 1.1802 · call premium paid $57,710 · `FV_PREM_CALL` −$58,303 · `USD_CALL` at `S_T = S0_in` $3,177,227 (comparison only).
 
 These base-case values and check figures are what the build contract calls the "§7 check figures." The Checks tab (§5.2) tests each one.
 
@@ -288,7 +286,7 @@ Failing checks stay visible as FAIL; no check is ever hard-coded or overridden t
 - Multi-currency or multi-horizon portfolio effects
 - A live forward quote: `F0_in` is a stale placeholder until Stage 4
 
-**Next steps — later stages will:** (a) build the workbook with AI help, using §4 as the instruction block and §6.2 as the improvement brief (Stage 3); (b) replace the placeholders with live data and a live or CIP-implied forward, commenting on the gap (Stage 4); (c) verify the model independently before the memo — a separate LLM run, a hand recomputation of the forward, money-market, and put figures, and a check of `F_IMPLIED` against a published bank quote, investigating any figure that differs by more than 0.5%; and (d) translate the sensitivity evidence into the Stage 5 decision memo to the CFO.
+**Next steps — later stages will:** (a) build the workbook with AI help, using §4 as the instruction block and §6.2 as the improvement brief (Stage 3); (b) replace the placeholders with live data and the bank's quote, or a requote from the bank, commenting on the gap (Stage 4); (c) verify the model independently before the memo — a separate LLM run, a hand recomputation of the forward, money-market, and put figures, and a check of `F_IMPLIED` against a published bank quote, investigating any figure that differs by more than 0.5%; and (d) translate the sensitivity evidence into the Stage 5 decision memo to the CFO.
 
 ---
 
@@ -301,3 +299,4 @@ Failing checks stay visible as FAIL; no check is ever hard-coded or overridden t
 | 0.3 | 2026-11-06 | Vanessa Louie | Added the model review (§6.1–6.2) and corrected three points in it; added tab purposes to §5 and the validation rules to §6.3; removed the template's guidance sections |
 | 0.4 | 2026-11-13 | Vanessa Louie | Aligned with the build contract: ten contract named ranges with exact Inputs cells; strikes as `=S0_in` formulas; fill-color legend (yellow inputs, blue assumptions, gray final outputs, green every other formula); call calculated for comparison only, with `CALL_NET` payoff and `USD_CALL` proceeds; `STEP_FRAC` (C15) and `FWD_SOURCE` toggle (C16) as named inputs, with `F_USED` feeding `USD_FWD` and `BREAKEVEN_PUT_FWD` while the parity check stays on `F0_in`; provenance moved to a single Cover block; added the Checks tab (§5.2) with yellow reference Expected values |
 | 0.5 | 2026-11-13 | Vanessa Louie | Documented the Stage 3 build decisions: five blue `TOL_*` named tolerances (`Inputs!C17`–`C21`, including `TOL_EXACT` = 0); extra §2.2 names (`EUR_BORROWED`, `USD_AT_SPOT`, `PARITY_GAP_PCT`, `PREM_PUT_USD`, `PREM_CALL_USD`); constancy and grid checks split into 2 and 3 Checks rows; separate "Extended grid: put break-even vs forward" chart; "Put intrinsic payoff" reference column; formula-built grid index `i`; "Legend-Key" tab name; green MoneyMarket parity cell; fixed 1.05 chart x-axis minimum (§6.2 item 6); `build-model.ps1` added to rebuild the workbook |
+| 0.6 | 2026-11-20 | Vanessa Louie | Removed the forward-source toggle: `FWD_SOURCE` (`Inputs!C16`) and `F_USED` are gone, so `USD_FWD` and `BREAKEVEN_PUT_FWD` read `F0_in` directly; the Stage 4 source for `F0_in` is the bank's quote, or a requote from the bank. `build-model.ps1` and `model.xlsx` rebuilt to match; Checks tab results unchanged (26 PASS, 1 FAIL: parity). `Inputs!C16` is left empty |

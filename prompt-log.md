@@ -41,3 +41,15 @@ To be appended after each use of AI
 - **Produced:** Spec v0.5; `build-model.ps1` updated so the second chart is smaller, titled "Extended grid: put break-even vs forward," and marks the break-even at (`BREAKEVEN_PUT_FWD`, `USD_FWD`); `model.xlsx` rebuilt from it; four commits.
 - **What was wrong:** The workbook built earlier did not match the new chart wording in v0.5, so it had to be rebuilt. The first rebuild failed because I had `model.xlsx` open in Excel; Claude stopped and asked instead of closing my window.
 - **How it was caught:** Excel refused to overwrite the open file; Claude found the lock file and my open Excel window. After the rebuild Claude re-read the checks (0 error cells, only parity FAIL) and both charts (titles, sizes, marker at x = 1.1802).
+
+## 2026-11-20
+- **Asked:** In `spec.md`, remove `FWD_SOURCE` and `F_USED` so every forward output reads `F0_in`, and change the Stage 4 source for `F0_in` (§2.1 and Next steps item (b)) to "the bank's quote, or a requote from the bank."
+- **Produced:** Spec edits in §2, §2.1 (`FWD_SOURCE` row removed, new `F0_in` source), §2.2 (`F_USED` row removed), §4 Steps 2–4 (`USD_FWD` and `BREAKEVEN_PUT_FWD` on `F0_in`, toggle sentence removed), §5 legend, §5.1, and §8 item (b).
+- **What was wrong:** The edit leaves the spec out of step with other files: §6.2 item 1 still calls for the toggle and a "live or CIP-implied" forward, `Inputs!C16` is now unused, the version and change log were not updated, and `model.xlsx` and `build-model.ps1` still contain the toggle.
+- **How it was caught:** Claude searched the spec and the build for the removed names after editing and flagged what remained.
+
+## 2026-11-20
+- **Asked:** Do items 3 and 4 from the previous entry: remove `FWD_SOURCE` and `F_USED` from `build-model.ps1`, rebuild `model.xlsx`, confirm the Checks tab results are unchanged, and bump `spec.md` to v0.6 with a change-log row. I will rewrite §6.2 item 1 myself.
+- **Produced:** `build-model.ps1` without the toggle (Inputs row 16 and its dropdown, the Forward tab's toggle and `F_USED` rows, the MoneyMarket toggle note, the Sensitivity summary "Forward source" row, and `FWD_SOURCE` in the legend); `USD_FWD` and `BREAKEVEN_PUT_FWD` now read `F0_in`. `model.xlsx` rebuilt. Spec v0.6: version, date, LLM-used note, and change-log row.
+- **What was wrong:** Nothing failed. Removing the toggle leaves `Inputs!C16` and the Sensitivity summary row 4 empty; rows were not renumbered, because the Checks tab and `USD_FLOOR_PUT` point at fixed Sensitivity cells.
+- **How it was caught:** Claude dumped the Checks tab before and after the rebuild and compared them: identical (27 rows, 26 PASS, parity FAIL at 4.1177%), with 0 error cells and neither name left in the Name Manager.

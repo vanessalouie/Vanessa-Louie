@@ -75,7 +75,7 @@ try {
   Title $l 'Legend / Key' 'Colors are cell FILLS.'
   $leg = @(
     @($YELLOW, 'Inputs: typed values (Inputs tab), plus the Checks Expected column: "Reference inputs, typed by design."'),
-    @($BLUE,   'Assumptions: BASIS, STEP_FRAC, FWD_SOURCE, and the tolerance inputs (TOL_*)'),
+    @($BLUE,   'Assumptions: BASIS, STEP_FRAC, and the tolerance inputs (TOL_*)'),
     @($GREEN,  'Formulas: every formula that is not a final output'),
     @($GRAY,   'Final outputs: strategy summary block, Sensitivity result columns and winner labels, Checks Result column')
   )
@@ -100,7 +100,6 @@ try {
     @(13, 'PREM_PUT',   'Put premium per 1 EUR',                         0.0147,     $FMT_RATE, $YELLOW, 'USD',              'Fixed by scenario'),
     @(14, 'PREM_CALL',  'Call premium per 1 EUR (comparison only)',      0.0199,     $FMT_RATE, $YELLOW, 'USD',              'Fixed by scenario'),
     @(15, 'STEP_FRAC',  'Sensitivity grid step (assumption)',            0.01,       '0%',      $BLUE,   '%',                'Fixed by design'),
-    @(16, 'FWD_SOURCE', 'Forward-source toggle: "Quoted" or "Implied"',  'Quoted',   '@',       $BLUE,   'Text',             'Fixed by design (default "Quoted")'),
     @(17, 'TOL_USD',    'Checks tolerance: USD and EUR amounts',         1,          '0',       $BLUE,   'USD / EUR',        'Fixed by design'),
     @(18, 'TOL_FACTOR', 'Checks tolerance: growth factors',              0.000001,   '0.000000',$BLUE,   'Factor',           'Fixed by design'),
     @(19, 'TOL_RATE',   'Checks tolerance: exchange rates',              0.0001,     $FMT_RATE, $BLUE,   'USD per EUR',      'Fixed by design'),
@@ -112,8 +111,6 @@ try {
     Put $in "C$r" $x[3] $x[4] $x[5] $x[1]
     Put $in "D$r" $x[6]; Put $in "E$r" $x[7]
   }
-  $null = $in.Range('C16').Validation.Delete()
-  $in.Range('C16').Validation.Add(3, 1, 1, 'Quoted,Implied')
   Put $in 'A23' 'Derived values (§2.2, §4 Step 1)'; Header $in 'A23'
   Put $in 'A24' 'DF_USD';       Put $in 'B24' 'USD growth factor to settlement';  Put $in 'C24' '=1+R_USD*T_DAYS/BASIS'          $FMT_DF  $GREEN 'DF_USD'
   Put $in 'A25' 'DF_FC';        Put $in 'B25' 'EUR growth factor to settlement';  Put $in 'C25' '=1+R_FC*T_DAYS/BASIS'           $FMT_DF  $GREEN 'DF_FC'
@@ -133,16 +130,12 @@ try {
   Put $mm 'A10' 'PARITY_GAP (USD)';                                  Put $mm 'C10' '=C9-USD_MM'      $FMT_USD  $GREEN 'PARITY_GAP'
   Put $mm 'A11' 'PARITY_GAP (% of USD_MM)';                          Put $mm 'C11' '=PARITY_GAP/USD_MM' $FMT_PCT2 $GREEN 'PARITY_GAP_PCT'
   Put $mm 'A12' 'Parity check (within TOL_PARITY)';                  Put $mm 'C12' '=IF(ABS(PARITY_GAP_PCT)<=TOL_PARITY,"PASS","FAIL")' $null $GREEN
-  Put $mm 'A13' 'The parity check always uses the quoted F0_in, never F_USED, so the FWD_SOURCE toggle cannot hide the gap.'
-  $mm.Range('A13').Font.Italic = $true
   $mm.Columns.Item(1).ColumnWidth = 48; $mm.Columns.Item(3).ColumnWidth = 16
 
   # ---------- Forward ----------
   $fw = $ws['Forward']
   Title $fw 'Forward hedge (§4 Step 2)' 'Placeholder: forward-based outputs use the stale scenario forward until Stage 4.'
-  Put $fw 'A4' 'Forward source selected (FWD_SOURCE)'; Put $fw 'C4' '=FWD_SOURCE' $null $GREEN
-  Put $fw 'A5' 'F_USED';                               Put $fw 'C5' '=IF(FWD_SOURCE="Implied",F_IMPLIED,F0_in)' $FMT_RATE $GREEN 'F_USED'
-  Put $fw 'A6' 'USD_FWD (FC_AMT x F_USED), locked in at t0'; Put $fw 'C6' '=FC_AMT*F_USED' $FMT_USD $GREEN 'USD_FWD'
+  Put $fw 'A4' 'USD_FWD (FC_AMT x F0_in), locked in at t0'; Put $fw 'C4' '=FC_AMT*F0_in' $FMT_USD $GREEN 'USD_FWD'
   $fw.Columns.Item(1).ColumnWidth = 44; $fw.Columns.Item(3).ColumnWidth = 16
 
   # ---------- Sensitivity: grid S_T first (Option tab reads it) ----------
@@ -171,7 +164,7 @@ try {
   Put $op 'A3' 'K_PUT';                                Put $op 'C3' '=K_PUT'                $FMT_RATE $GREEN
   Put $op 'A4' 'Put premium paid today (USD)';         Put $op 'C4' '=PREM_PUT*FC_AMT'      $FMT_USD  $GREEN 'PREM_PUT_USD'
   Put $op 'A5' 'FV_PREM_PUT (premium at settlement)';  Put $op 'C5' '=FV_PREM_PUT'          $FMT_USD  $GREEN
-  Put $op 'A6' 'BREAKEVEN_PUT_FWD (F_USED - FV_PREM_PUT / FC_AMT)'; Put $op 'C6' '=F_USED-FV_PREM_PUT/FC_AMT' $FMT_RATE $GREEN 'BREAKEVEN_PUT_FWD'
+  Put $op 'A6' 'BREAKEVEN_PUT_FWD (F0_in - FV_PREM_PUT / FC_AMT)'; Put $op 'C6' '=F0_in-FV_PREM_PUT/FC_AMT' $FMT_RATE $GREEN 'BREAKEVEN_PUT_FWD'
   Put $op 'B8' 'S_T'; Put $op 'C8' 'Put intrinsic payoff (USD)'; Put $op 'D8' 'USD_PUT = MAX(S_T, K_PUT) x FC_AMT + FV_PREM_PUT'; Header $op 'B8:D8'
   $opRow = 9
   foreach ($r in $core) {
@@ -226,7 +219,6 @@ try {
   Put $se 'B3' 'Strategy summary (forward-based figures are placeholders until Stage 4)'; Header $se 'B3'
   $base = 'MATCH(S0_in,S_T_grid,0)'
   $sum = @(
-    @(4,  'Forward source (FWD_SOURCE)',        '=FWD_SOURCE',              $null),
     @(5,  'USD_FWD',                            '=USD_FWD',                 $FMT_USD),
     @(6,  'USD_MM',                             '=USD_MM',                  $FMT_USD),
     @(7,  'F_IMPLIED',                          '=F_IMPLIED',               $FMT_RATE),
