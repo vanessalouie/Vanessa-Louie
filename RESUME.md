@@ -61,6 +61,3 @@ Chinese(Mandarin & Cantonese): Conversationally fluent
 Spanish: Limited Working Proficiency  
 **Computer Skills:** Microsoft Word, Excel, Powerpoint, Sharepoint and Adobe Acrobat  
 **Interests:** Baking, Traveling
-  
-  ## Engagements
-  - [Resume](RESUME.md)

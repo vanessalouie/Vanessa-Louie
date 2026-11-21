@@ -9,3 +9,5 @@ Looking ahead, my immediate goals are to start a personal HR analytics project a
 
 Drafted  with help from Gemini; reviewed and edited by me.
 
+## Engagements
+- [Resume](RESUME.md)

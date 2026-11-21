@@ -53,3 +53,9 @@ To be appended after each use of AI
 - **Produced:** `build-model.ps1` without the toggle (Inputs row 16 and its dropdown, the Forward tab's toggle and `F_USED` rows, the MoneyMarket toggle note, the Sensitivity summary "Forward source" row, and `FWD_SOURCE` in the legend); `USD_FWD` and `BREAKEVEN_PUT_FWD` now read `F0_in`. `model.xlsx` rebuilt. Spec v0.6: version, date, LLM-used note, and change-log row.
 - **What was wrong:** Nothing failed. Removing the toggle leaves `Inputs!C16` and the Sensitivity summary row 4 empty; rows were not renumbered, because the Checks tab and `USD_FLOOR_PUT` point at fixed Sensitivity cells.
 - **How it was caught:** Claude dumped the Checks tab before and after the rebuild and compared them: identical (27 rows, 26 PASS, parity FAIL at 4.1177%), with 0 error cells and neither name left in the Name Manager.
+
+## 2026-11-21
+- **Asked:** Move the Engagements section from the end of `RESUME.md` to the end of `README.md`, show both files before committing, and commit with a message that says what changed.
+- **Produced:** `RESUME.md` now ends at the Skills and Interests section; `README.md` ends with `## Engagements` and the `[Resume](RESUME.md)` link.
+- **What was wrong:** In `RESUME.md` the section was indented two spaces and the link pointed to the resume from inside the resume itself. Claude removed the indent when moving it and also removed the whitespace-only line above it.
+- **How it was caught:** Claude showed the `git diff` and both full files before committing.
