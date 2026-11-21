@@ -52,23 +52,23 @@ try {
   $cover = @(
     @('Scenario', 'Scenario 34: erp-software. EUR 2,900,000 receivable from a Dutch retailer, settling in 91 days'),
     @('Author',   'Vanessa Louie'),
-    @('Version',  'Workbook draft built from spec v0.4 (capabilities/fx-hedging/spec.md)'),
-    @('Date',     '2026-11-13'),
+    @('Version',  'Workbook built from spec v0.7 (capabilities/fx-hedging/spec.md), live Stage 4 inputs'),
+    @('Date',     '2026-11-20'),
     @('Purpose',  'Compare no hedge, forward, money-market, and put hedges for the receivable; the call is shown for comparison only.')
   )
   for ($i = 0; $i -lt $cover.Count; $i++) { $r = 3 + $i; Put $c "A$r" $cover[$i][0]; Put $c "B$r" ("'" + $cover[$i][1]) }
   Header $c 'A3:A7'
   Put $c 'A9' 'Data provenance (the only place sources are stored)'; Header $c 'A9'
-  Put $c 'A10' 'Indicative placeholder, replaced at Stage 4.'; $c.Range('A10').Font.Italic = $true
+  Put $c 'A10' 'Live market data, retrieved 20 Nov 2026 (Stage 4). Rates show the date the rate applies to.'; $c.Range('A10').Font.Italic = $true
   Put $c 'A11' 'Input'; Put $c 'B11' 'Source'; Put $c 'C11' 'Date'; Header $c 'A11:C11'
   $prov = @(
-    @('S0_in',  'PrimeXBT, intraday',                       '6 Nov 2026'),
-    @('F0_in',  "Scenario's indicative quote (stale)",      'Scenario'),
-    @('R_USD',  '3-month CME Term SOFR, global-rates.com',  '5 Nov 2026'),
-    @('R_FC',   '3-month Euribor, global-rates.com',        '5 Nov 2026')
+    @('S0_in',  'Yahoo Finance EURUSD=X, delayed quote taken after the 17:00 New York close (https://finance.yahoo.com/quote/EURUSD=X/)', '20 Nov 2026 22:29:46 GMT'),
+    @('F0_in',  "Bank's quote: the scenario's 91-day forward (no requote received)", 'Scenario'),
+    @('R_USD',  '3-month CME Term SOFR, global-rates.com (https://www.global-rates.com/en/); latest available at access', 'Rate date 19 Nov 2026; accessed about 13:00 HST 20 Nov 2026 (23:00 GMT)'),
+    @('R_FC',   '3-month Euribor, global-rates.com (https://www.global-rates.com/en/); latest available at access', 'Rate date 19 Nov 2026; accessed about 13:00 HST 20 Nov 2026 (23:00 GMT)')
   )
   for ($i = 0; $i -lt 4; $i++) { $r = 12 + $i; Put $c "A$r" $prov[$i][0]; Put $c "B$r" $prov[$i][1]; Put $c "C$r" ("'" + $prov[$i][2]) }
-  $c.Columns.Item(1).ColumnWidth = 14; $c.Columns.Item(2).ColumnWidth = 90; $c.Columns.Item(3).ColumnWidth = 14
+  $c.Columns.Item(1).ColumnWidth = 14; $c.Columns.Item(2).ColumnWidth = 90; $c.Columns.Item(3).ColumnWidth = 62
 
   # ---------- Legend-Key ----------
   $l = $ws['Legend-Key']
@@ -89,10 +89,10 @@ try {
   Header $in 'A3:E3'
   $rows = @(
     @(4,  'FC_AMT',     'EUR receivable',                                2900000,    $FMT_EUR,  $YELLOW, 'EUR',              'Fixed by scenario'),
-    @(5,  'S0_in',      'Spot at inception',                             1.1157,     $FMT_RATE, $YELLOW, 'USD per EUR',      '=Cover!B12&" ("&Cover!C12&")"'),
+    @(5,  'S0_in',      'Spot at inception',                             1.0975,     $FMT_RATE, $YELLOW, 'USD per EUR',      '=Cover!B12&" ("&Cover!C12&")"'),
     @(6,  'F0_in',      '91-day forward (quoted)',                       1.1653,     $FMT_RATE, $YELLOW, 'USD per EUR',      '=Cover!B13&" ("&Cover!C13&")"'),
-    @(7,  'R_USD',      'USD rate to settlement',                        0.040669,   $FMT_PCT,  $YELLOW, 'Annual, ACT/360',  '=Cover!B14&" ("&Cover!C14&")"'),
-    @(8,  'R_FC',       'EUR rate to settlement',                        0.02812,    $FMT_PCT,  $YELLOW, 'Annual, ACT/360',  '=Cover!B15&" ("&Cover!C15&")"'),
+    @(7,  'R_USD',      'USD rate to settlement',                        0.0420063,  $FMT_PCT,  $YELLOW, 'Annual, ACT/360',  '=Cover!B14&" ("&Cover!C14&")"'),
+    @(8,  'R_FC',       'EUR rate to settlement',                        0.02847,    $FMT_PCT,  $YELLOW, 'Annual, ACT/360',  '=Cover!B15&" ("&Cover!C15&")"'),
     @(9,  'T_DAYS',     'Days to settlement',                            91,         '0',       $YELLOW, 'Days',             'Fixed by scenario'),
     @(10, 'BASIS',      'Day-count denominator (assumption)',            360,        '0',       $BLUE,   'Days',             'Both legs ACT/360'),
     @(11, 'K_PUT',      'Put strike (= S0_in, at the money)',            '=S0_in',   $FMT_RATE, $GREEN,  'USD per EUR',      'Formula'),
@@ -134,7 +134,7 @@ try {
 
   # ---------- Forward ----------
   $fw = $ws['Forward']
-  Title $fw 'Forward hedge (§4 Step 2)' 'Placeholder: forward-based outputs use the stale scenario forward until Stage 4.'
+  Title $fw 'Forward hedge (§4 Step 2)' 'F0_in is the bank''s quote. It is compared with the CIP-implied forward on the MoneyMarket tab (parity check).'
   Put $fw 'A4' 'USD_FWD (FC_AMT x F0_in), locked in at t0'; Put $fw 'C4' '=FC_AMT*F0_in' $FMT_USD $GREEN 'USD_FWD'
   $fw.Columns.Item(1).ColumnWidth = 44; $fw.Columns.Item(3).ColumnWidth = 16
 
@@ -146,8 +146,8 @@ try {
   Put $se 'A18' 'Core grid: S0_in x (1 + i x STEP_FRAC), i = -5 to +5 (11 rows)'; Header $se 'A18'
   for ($k = 0; $k -lt 11; $k++) { Put $se "$($cols[$k])19" $hdr[$k]; Put $se "$($cols[$k])33" $hdr[$k] }
   Header $se 'B19:L19'; Header $se 'B33:L33'
-  Put $se 'A32' 'Extension block (not part of the core grid or the grid check): +6% and +7%'; Header $se 'A32'
-  $core = 20..30; $ext = 34..35
+  Put $se 'A32' 'Extension block (not part of the core grid or the grid check): +6% to +8%'; Header $se 'A32'
+  $core = 20..30; $ext = 34..36
   foreach ($r in $core) {
     Put $se "B$r" '=ROW()-ROW($B$25)' '0' $GREEN
     Put $se "C$r" "=S0_in*(1+B$r*STEP_FRAC)" $FMT_RATE $GREEN
@@ -174,7 +174,7 @@ try {
     $opRow++
   }
   $null = $wb.Names.Add('USD_PUT', "='Option'!`$D`$9:`$D`$19")
-  Put $op 'A21' 'Extension rows (+6%, +7%)'; Header $op 'A21'
+  Put $op 'A21' 'Extension rows (+6% to +8%)'; Header $op 'A21'
   $opRow = 22
   foreach ($r in $ext) {
     Put $op "B$opRow" "=Sensitivity!C$r" $FMT_RATE $GREEN
@@ -200,7 +200,7 @@ try {
   $op.Columns.Item(3).ColumnWidth = 30; $op.Columns.Item(4).ColumnWidth = 44
 
   # ---------- Sensitivity: result columns ----------
-  $map = @{}; for ($k = 0; $k -lt 11; $k++) { $map[$core[$k]] = 9 + $k }; $map[34] = 22; $map[35] = 23
+  $map = @{}; for ($k = 0; $k -lt 11; $k++) { $map[$core[$k]] = 9 + $k }; $map[34] = 22; $map[35] = 23; $map[36] = 24
   foreach ($r in ($core + $ext)) {
     $h = if ($r -ge 34) { 33 } else { 19 }
     Put $se "D$r" "=C$r*FC_AMT"          $FMT_USD $GRAY
@@ -216,7 +216,7 @@ try {
   $null = $wb.Names.Add('USD_NO_HEDGE', "='Sensitivity'!`$D`$20:`$D`$30")
 
   # Strategy summary block (gray final outputs)
-  Put $se 'B3' 'Strategy summary (forward-based figures are placeholders until Stage 4)'; Header $se 'B3'
+  Put $se 'B3' 'Strategy summary (live inputs, 20 Nov 2026; forward = the bank''s quote)'; Header $se 'B3'
   $base = 'MATCH(S0_in,S_T_grid,0)'
   $sum = @(
     @(5,  'USD_FWD',                            '=USD_FWD',                 $FMT_USD),
@@ -253,14 +253,14 @@ try {
     $ch.HasTitle = $true; $ch.ChartTitle.Text = $title
     $ax = $ch.Axes(1); $ax.HasTitle = $true; $ax.AxisTitle.Text = 'Settlement spot S_T (USD per EUR)'
     $ay = $ch.Axes(2); $ay.HasTitle = $true; $ay.AxisTitle.Text = 'USD proceeds'
-    $ax.MinimumScale = 1.05
+    # x-axis bounds left on automatic so the grid stays fully visible when S0_in changes
   }
   $top = $se.Range('N3').Top; $left = $se.Range('N3').Left
   AddChart $left $top 620 330 'USD proceeds vs. settlement spot (core grid, -5% to +5%)' "='Sensitivity'!`$C`$20:`$C`$30" @(
     "='Sensitivity'!`$D`$20:`$D`$30", "='Sensitivity'!`$E`$20:`$E`$30", "='Sensitivity'!`$F`$20:`$F`$30", "='Sensitivity'!`$G`$20:`$G`$30")
-  AddChart $left ($top + 345) 460 260 'Extended grid: put break-even vs forward' "=('Sensitivity'!`$C`$20:`$C`$30,'Sensitivity'!`$C`$34:`$C`$35)" @(
-    "=('Sensitivity'!`$D`$20:`$D`$30,'Sensitivity'!`$D`$34:`$D`$35)", "=('Sensitivity'!`$E`$20:`$E`$30,'Sensitivity'!`$E`$34:`$E`$35)",
-    "=('Sensitivity'!`$F`$20:`$F`$30,'Sensitivity'!`$F`$34:`$F`$35)", "=('Sensitivity'!`$G`$20:`$G`$30,'Sensitivity'!`$G`$34:`$G`$35)")
+  AddChart $left ($top + 345) 460 260 'Extended grid: put break-even vs forward' "=('Sensitivity'!`$C`$20:`$C`$30,'Sensitivity'!`$C`$34:`$C`$36)" @(
+    "=('Sensitivity'!`$D`$20:`$D`$30,'Sensitivity'!`$D`$34:`$D`$36)", "=('Sensitivity'!`$E`$20:`$E`$30,'Sensitivity'!`$E`$34:`$E`$36)",
+    "=('Sensitivity'!`$F`$20:`$F`$30,'Sensitivity'!`$F`$34:`$F`$36)", "=('Sensitivity'!`$G`$20:`$G`$30,'Sensitivity'!`$G`$34:`$G`$36)")
   # Break-even marker: one point at (BREAKEVEN_PUT_FWD, USD_FWD), where put proceeds equal the forward's
   $be = $script:lastChart.SeriesCollection().NewSeries()
   $be.Name = 'Put break-even (BREAKEVEN_PUT_FWD)'
@@ -276,7 +276,7 @@ try {
   foreach ($p in @(@('A6','Check'),@('B6','Expected'),@('C6','Calculated'),@('D6','Difference'),@('E6','Tolerance'),@('F6','Result'))) { Put $ck $p[0] $p[1] }
   Header $ck 'A6:F6'
   $checks = @(
-    @('Parity: PARITY_GAP as % of USD_MM (expected FAIL at placeholders)', 0,        '=PARITY_GAP_PCT',                           'TOL_PARITY', $FMT_PCT),
+    @('Parity: PARITY_GAP as % of USD_MM (FAIL = bank quote differs from CIP)', 0,        '=PARITY_GAP_PCT',                           'TOL_PARITY', $FMT_PCT),
     @('Kink: USD_PUT at S_T = K_PUT',                                    3192462,  '=INDEX(USD_PUT,MATCH(K_PUT,S_T_grid,0))',    'TOL_USD',    $FMT_USD),
     @('Constancy: forward proceeds, max - min across grid',              0,        '=MAX(Sensitivity!E20:E30)-MIN(Sensitivity!E20:E30)', 'TOL_EXACT', $FMT_USD),
     @('Constancy: money-market proceeds, max - min across grid',         0,        '=MAX(Sensitivity!F20:F30)-MIN(Sensitivity!F20:F30)', 'TOL_EXACT', $FMT_USD),
@@ -328,12 +328,12 @@ try {
     'Horizon: single maturity, T_DAYS = 91.',
     'Day count: simple interest, r x T_DAYS / BASIS. 3-month Term SOFR and 3-month Euribor are both ACT/360, so BASIS = 360 is exact.',
     'Parity: the money-market hedge should replicate the forward under covered interest parity. A gap larger than rounding is a finding about the inputs.',
-    'Known placeholder problem: the scenario forward (1.1653) sits about 4% above the CIP-implied forward, so the parity check is expected to FAIL until Stage 4.',
+    'Bank quote vs. CIP: at the live 20 Nov 2026 inputs, the bank''s forward sits well above the CIP-implied forward, so the parity check shows FAIL. This is a finding about the quote, not a model error; see MoneyMarket!C10:C12.',
     'Option premiums are paid upfront in USD per 1 EUR (no multiplier), treated as negative cash flows carried forward at R_USD.',
     'The call is calculated for comparison only; it does not hedge a EUR receivable and is excluded from the winner labels.',
     'Excluded: counterparty and credit risk, transaction costs and bid-ask spreads, tax and hedge accounting.',
     'Scenario construction: S_T varies deterministically across the grid; no probabilities and no volatility model.',
-    'Limitations: static full-notional hedge; premiums are scenario inputs, not model prices; forward is a stale placeholder until Stage 4.'
+    'Limitations: static full-notional hedge; premiums are scenario inputs, not model prices; forward is the bank''s quote and does not match CIP at live inputs.'
   )
   for ($i = 0; $i -lt $notes.Count; $i++) { Put $nt "A$(4 + $i)" ("- " + $notes[$i]) }
   $nt.Columns.Item(1).ColumnWidth = 150
@@ -356,7 +356,7 @@ try {
   }
   "Failing: " + $ck.Range('C4').Text
   "--- Sensitivity ---"
-  foreach ($row in (20..30 + 34..35)) {
+  foreach ($row in (20..30 + 34..36)) {
     ($cols | ForEach-Object { $se.Range("$_$row").Text }) -join ' | '
   }
 

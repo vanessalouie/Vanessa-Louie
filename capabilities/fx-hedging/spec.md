@@ -14,7 +14,7 @@
 | **Updated by** | Vanessa Louie |
 | **Date Created** | 2026-11-06 |
 | **Date Updated** | 2026-11-20 |
-| **Version** | 0.6 |
+| **Version** | 0.7 |
 | **LLM Used** (optional) | Claude: helped fit my draft to the course template and recomputed the check figures; I reviewed every figure and wrote the model review (§6.1–6.2). v0.4: Claude drafted the edits from my build-contract decisions. v0.5: Claude built the workbook and documented the build decisions I approved. v0.6: Claude drafted the toggle-removal edits I specified and rebuilt the workbook |
 | **Role** | Treasury Analyst |
 | **Audience** | CFO |
@@ -163,14 +163,14 @@ The call is excluded from the overall-winner and best-active-hedge labels (Step 
 | Checks | One row per validation check and per §5.1 figure (§5.2) |
 | Notes & Assumptions | Assumptions and limitations; sources are referenced from the Cover provenance block |
 
-**Cover data-provenance block** (the only place sources are stored), marked **"Indicative placeholder, replaced at Stage 4."**
+**Cover data-provenance block** (the only place sources are stored), marked **"Live market data, retrieved 20 Nov 2026 (Stage 4). Rates show the date the rate applies to."**
 
 | Input | Source | Date |
 |-------|--------|------|
-| `S0_in` | PrimeXBT, intraday | 6 Nov 2026 |
-| `F0_in` | Scenario's indicative quote (stale) | Scenario |
-| `R_USD` | 3-month CME Term SOFR, global-rates.com | 5 Nov 2026 |
-| `R_FC` | 3-month Euribor, global-rates.com | 5 Nov 2026 |
+| `S0_in` | Yahoo Finance EURUSD=X, delayed quote taken after the 17:00 New York close (https://finance.yahoo.com/quote/EURUSD=X/) | 20 Nov 2026 22:29:46 GMT |
+| `F0_in` | Bank's quote: the scenario's 91-day forward (no requote received) | Scenario |
+| `R_USD` | 3-month CME Term SOFR, global-rates.com (https://www.global-rates.com/en/); latest available at access | Rate date 19 Nov 2026; accessed about 13:00 HST 20 Nov 2026 (23:00 GMT) |
+| `R_FC` | 3-month Euribor, global-rates.com (https://www.global-rates.com/en/); latest available at access | Rate date 19 Nov 2026; accessed about 13:00 HST 20 Nov 2026 (23:00 GMT) |
 
 | Output | Description | Format | Purpose |
 |--------|-------------|--------|---------|
@@ -269,9 +269,9 @@ Failing checks stay visible as FAIL; no check is ever hard-coded or overridden t
 - **Grid:** `S_T_grid` spans `S0_in × (1 ± 5%)` in `STEP_FRAC` = 1% increments → 11 rows, 1.0599 to 1.1715, baseline at 1.1157.
 - **Strategies plotted:** no hedge, forward, money market, put.
 - **Primary chart:** plots only the 11-row core grid. Line chart, `S_T` on the x-axis, USD proceeds on the y-axis. Forward and money-market lines are flat; no hedge is a straight upward line; the put is flat at $3,192,462 up to `K_PUT`, then rises with a kink at the strike.
-- **Chart x-axis:** both charts use a fixed x-axis minimum of 1.05. It must be re-checked if the Stage 4 spot moves far (§6.2 item 6).
+- **Chart x-axis:** both charts leave the x-axis bounds on automatic, so the full grid stays visible when `S0_in` changes. The fixed 1.05 minimum used at Stage 3 cut off the bottom grid row (1.0426) at the live Stage 4 spot.
 - **Secondary table:** hedge profit vs. no hedge for each strategy.
-- **Testing the Stage 1 hypothesis (put break-even near 1.18):** `BREAKEVEN_PUT_FWD` ≈ 1.1802 needs a 5.8% euro rise in 91 days, beyond the top grid row (1.1715). The strategy summary reports the break-even and the required move, and a second, smaller chart titled "Extended grid: put break-even vs forward" plots all 13 rows (core grid plus the §6.2 item 4 extension block) with `BREAKEVEN_PUT_FWD` marked as a point at (`BREAKEVEN_PUT_FWD`, `USD_FWD`), where the put's proceeds equal the forward's.
+- **Testing the Stage 1 hypothesis (put break-even near 1.18):** `BREAKEVEN_PUT_FWD` ≈ 1.1802 needs a 5.8% euro rise in 91 days, beyond the top grid row (1.1715). The strategy summary reports the break-even and the required move, and a second, smaller chart titled "Extended grid: put break-even vs forward" plots all 14 rows (core grid plus a +6% to +8% extension block; the +8% row was added at Stage 4 because the live break-even sits beyond +7%) with `BREAKEVEN_PUT_FWD` marked as a point at (`BREAKEVEN_PUT_FWD`, `USD_FWD`), where the put's proceeds equal the forward's.
 - **What the chart should communicate:** the trade-off between **certainty** (forward / money market, flat lines), **optionality** (the put's kink, paid for by the premium), and **naked exposure** (no hedge, unbounded on both sides).
 
 ---
@@ -300,3 +300,4 @@ Failing checks stay visible as FAIL; no check is ever hard-coded or overridden t
 | 0.4 | 2026-11-13 | Vanessa Louie | Aligned with the build contract: ten contract named ranges with exact Inputs cells; strikes as `=S0_in` formulas; fill-color legend (yellow inputs, blue assumptions, gray final outputs, green every other formula); call calculated for comparison only, with `CALL_NET` payoff and `USD_CALL` proceeds; `STEP_FRAC` (C15) and `FWD_SOURCE` toggle (C16) as named inputs, with `F_USED` feeding `USD_FWD` and `BREAKEVEN_PUT_FWD` while the parity check stays on `F0_in`; provenance moved to a single Cover block; added the Checks tab (§5.2) with yellow reference Expected values |
 | 0.5 | 2026-11-13 | Vanessa Louie | Documented the Stage 3 build decisions: five blue `TOL_*` named tolerances (`Inputs!C17`–`C21`, including `TOL_EXACT` = 0); extra §2.2 names (`EUR_BORROWED`, `USD_AT_SPOT`, `PARITY_GAP_PCT`, `PREM_PUT_USD`, `PREM_CALL_USD`); constancy and grid checks split into 2 and 3 Checks rows; separate "Extended grid: put break-even vs forward" chart; "Put intrinsic payoff" reference column; formula-built grid index `i`; "Legend-Key" tab name; green MoneyMarket parity cell; fixed 1.05 chart x-axis minimum (§6.2 item 6); `build-model.ps1` added to rebuild the workbook |
 | 0.6 | 2026-11-20 | Vanessa Louie | Removed the forward-source toggle: `FWD_SOURCE` (`Inputs!C16`) and `F_USED` are gone, so `USD_FWD` and `BREAKEVEN_PUT_FWD` read `F0_in` directly; the Stage 4 source for `F0_in` is the bank's quote, or a requote from the bank. `build-model.ps1` and `model.xlsx` rebuilt to match; Checks tab results unchanged (26 PASS, 1 FAIL: parity). `Inputs!C16` is left empty |
+| 0.7 | 2026-11-20 | Vanessa Louie | Stage 4 structural fixes after loading live inputs: Cover provenance block now records the live sources (Yahoo Finance spot, 20 Nov 2026 22:29:46 GMT; Term SOFR and Euribor from global-rates.com, rate date 19 Nov 2026, accessed about 13:00 HST 20 Nov 2026; `F0_in` stays the bank's quote); chart x-axes switched from a fixed 1.05 minimum to automatic; extension block widened to +6% to +8% so the extended chart reaches the live break-even. §5.1 figures and the Checks Expected values are not yet updated: they wait for the hand recomputation |
